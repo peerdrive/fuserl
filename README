@@ -1,0 +1,2 @@
+Erlang bindings for FUSE (Filesystem in UserspacE).  Currently the
+low-level FUSE interface is supported.
