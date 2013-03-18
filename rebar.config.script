@@ -1,0 +1,50 @@
+
+IncPaths = [ "/usr/include/", "/usr/local/include/" ],
+CheckHeaders = [
+	{"limits.h", "HAVE_LIMITS_H"},
+	{"sys/param.h", "HAVE_SYS_PARAM_H"},
+	{"sys/xattr.h", "HAVE_SYS_XATTR_H"}
+],
+
+Defs = lists:foldl(
+	fun({Header, Define}, Acc) ->
+		case lists:any(fun(P) -> filelib:is_file(P ++ Header) end, IncPaths) of
+			true -> " -D" ++ Define ++ Acc;
+			false -> Acc
+		end
+	end,
+	"",
+	CheckHeaders),
+
+{ok, FuseCFlags0} = rebar_utils:sh("pkg-config --cflags fuse", [{use_stdout, false}]),
+{ok, FuseLDFlags0} = rebar_utils:sh("pkg-config --libs fuse", [{use_stdout, false}]),
+
+FuseCFlags = [ C || C <- FuseCFlags0, (C =/= 10) and (C =/= 13) ] ++
+	case os:type() of
+		{unix, darwin} -> " -DDARWIN_TWEAKS";
+		_ -> ""
+	end,
+
+FuseLDFlags = [ C || C <- FuseLDFlags0, (C =/= 10) and (C =/= 13) ],
+
+
+Config = [
+	{port_specs, [
+		{"priv/fuserl_drv.so", [
+			"c_src/fuserl.c",
+			"c_src/fuserl_portability.c"
+		]},
+		{"priv/fuserl", [
+			"c_src/fuserldrv.c",
+			"c_src/driver2pipe.c"
+		]}
+	]},
+	{port_env, [
+		{"CFLAGS", FuseCFlags ++ Defs},
+		{"LDFLAGS", FuseLDFlags}
+	]}
+],
+
+% io:format("config: ~p~n", [Config]),
+
+Config.

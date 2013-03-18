@@ -1,2 +1,5 @@
 Erlang bindings for FUSE (Filesystem in UserspacE).  Currently the
 low-level FUSE interface is supported.
+
+This is just the rebar-ized version of the original project found at
+ https://code.google.com/p/fuserl/

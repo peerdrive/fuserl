@@ -18,7 +18,6 @@
            code_change/3]).
 
 -include ("fuserl.hrl").
--include ("fuserlprefix.hrl").
 
 -record (fuserlsrvstate, { module, port, state }).
 
@@ -554,22 +553,8 @@ encode_start (Impl, MountOpts, MountPoint) ->
     fuserlcodec:encode_byte (erlang:length (Impl)),
     Impl ].
 
-fuserldrv_guessprefix () ->
-  lists:foldl (fun (Candidate, undefined) ->
-                 case file:read_file_info (Candidate ++ "/bin/fuserldrv") of
-                   { ok, _ } -> Candidate;
-                   { error, _ } -> undefined
-                 end;
-                   (_, Acc) ->
-                 Acc
-               end,
-               undefined,
-               [ ?automake_prefix, "/usr", "/usr/local", "/sw" ]).
-
 make_port (false) ->
-  { ok, DirVar } = application:get_env (fuserl, fuserldrvprefix),
-
-  Dir = case DirVar of auto_detect -> fuserldrv_guessprefix (); _ -> DirVar end,
+  Dir = code:priv_dir(fuserl),
 
 %  open_port ({ spawn, "/usr/bin/valgrind --log-file=/tmp/flass --num-callers=50 --tool=memcheck --track-fds=yes --leak-check=yes --show-reachable=yes " ++ Dir ++ "/bin/fuserldrv" }, [ binary, 
 
@@ -577,21 +562,19 @@ make_port (false) ->
 
 %  open_port ({ spawn, "strace -f -ff -e trace=file,desc -o flass " ++ Dir ++ "/bin/fuserldrv" }, [ binary,
 
-  open_port ({ spawn, Dir ++ "/bin/fuserldrv" }, [ binary, 
+  open_port ({ spawn, filename:join(Dir, "fuserl") }, [ binary, 
                                                    { packet, 4 },
                                                    nouse_stdio,
                                                    exit_status ]);
 make_port (true) ->
-  { ok, DirVar } = application:get_env (fuserl, fuserldrvprefix),
+  Dir = code:priv_dir(fuserl),
 
-  Dir = case DirVar of auto_detect -> fuserldrv_guessprefix (); _ -> DirVar end,
-
-  case erl_ddll:load_driver (Dir ++ "/lib", libfuserl) of
+  case erl_ddll:load_driver (Dir, fuserl_drv) of
     ok -> ok;
     { error, already_loaded } -> ok
   end,
 
-  open_port ({ spawn, libfuserl }, [ binary ]).
+  open_port ({ spawn_driver, fuserl_drv }, [ binary ]).
 
 scan_module (Module) ->
   { module, Module } = code:ensure_loaded (Module),

@@ -1,4 +1,3 @@
-#include "config.h"
 
 #define FUSE_USE_VERSION 26
 #undef ERL_SYS_DRV
@@ -38,6 +37,10 @@
 #define fuserl_debug(format, ...) fprintf (stderr, format, ##__VA_ARGS__)
 #else
 #define fuserl_debug(format, ...) do { } while (0)
+#endif
+
+#ifndef MAX
+#define MAX(a,b)        (((a) > (b)) ? (a) : (b))
 #endif
 
 /*=====================================================================*
@@ -1567,10 +1570,13 @@ static ErlDrvEntry fuserl_driver_entry =
   .stop = fuserl_stop,
   .output = fuserl_output,
   .ready_input = fuserl_ready_input,
-  .driver_name = (char*) "libfuserl"
+  .driver_name = "fuserl_drv",
+  .extended_marker = ERL_DRV_EXTENDED_MARKER,
+  .major_version = ERL_DRV_EXTENDED_MAJOR_VERSION,
+  .minor_version = ERL_DRV_EXTENDED_MINOR_VERSION,
 };
 
-DRIVER_INIT (libfuserl) /* must match name in driver_entry */
+DRIVER_INIT (fuserl_drv) /* must match name in driver_entry */
 {
   return &fuserl_driver_entry;
 }
