@@ -1,14 +1,16 @@
 
-IncPaths = [ "/usr/include/", "/usr/local/include/" ],
 CheckHeaders = [
 	{"limits.h", "HAVE_LIMITS_H"},
 	{"sys/param.h", "HAVE_SYS_PARAM_H"},
 	{"sys/xattr.h", "HAVE_SYS_XATTR_H"}
 ],
 
+{ok, IncPathsTmp} = rebar_utils:sh("scripts/print-gcc-include-paths.sh", [{use_stdout, false}]),
+IncPaths = string:tokens(IncPathsTmp, "\n"),
+
 Defs = lists:foldl(
 	fun({Header, Define}, Acc) ->
-		case lists:any(fun(P) -> filelib:is_file(P ++ Header) end, IncPaths) of
+		case lists:any(fun(P) -> filelib:is_file(P ++ "/" ++ Header) end, IncPaths) of
 			true -> " -D" ++ Define ++ Acc;
 			false -> Acc
 		end
