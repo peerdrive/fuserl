@@ -1,5 +1,5 @@
 {application, fuserl, [
   {description, "Erlang binding for FUSE"},
-  {vsn, "1"},
+  {vsn, git},
   {applications, [kernel, stdlib]}
 ]}.
