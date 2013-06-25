@@ -5,48 +5,66 @@ CheckHeaders = [
 	{"sys/xattr.h", "HAVE_SYS_XATTR_H"}
 ],
 
-{ok, IncPathsTmp} = rebar_utils:sh("scripts/print-gcc-include-paths.sh", [{use_stdout, false}]),
-IncPaths = string:tokens(IncPathsTmp, "\n"),
-
-Defs = lists:foldl(
-	fun({Header, Define}, Acc) ->
-		case lists:any(fun(P) -> filelib:is_file(P ++ "/" ++ Header) end, IncPaths) of
-			true -> " -D" ++ Define ++ Acc;
-			false -> Acc
-		end
+try
+	IncPathsTmp = case rebar_utils:sh("scripts/print-gcc-include-paths.sh",
+	                                  [{use_stdout, false}, return_on_error]) of
+		{ok, Result1}    -> Result1;
+		{error, Reason1} -> throw(Reason1)
 	end,
-	"",
-	CheckHeaders),
+	IncPaths = string:tokens(IncPathsTmp, "\n"),
 
-{ok, FuseCFlags0} = rebar_utils:sh("pkg-config --cflags fuse", [{use_stdout, false}]),
-{ok, FuseLDFlags0} = rebar_utils:sh("pkg-config --libs fuse", [{use_stdout, false}]),
+	Defs = lists:foldl(
+		fun({Header, Define}, Acc) ->
+			case lists:any(fun(P) -> filelib:is_file(P ++ "/" ++ Header) end, IncPaths) of
+				true -> " -D" ++ Define ++ Acc;
+				false -> Acc
+			end
+		end,
+		"",
+		CheckHeaders),
 
-FuseCFlags = [ C || C <- FuseCFlags0, (C =/= 10) and (C =/= 13) ] ++
-	case os:type() of
-		{unix, darwin} -> " -DDARWIN_TWEAKS";
-		_ -> ""
+	FuseCFlags0 = case rebar_utils:sh("pkg-config --cflags fuse",
+	                                  [{use_stdout, false}, return_on_error]) of
+		{ok, Result2}    -> Result2;
+		{error, Reason2} -> throw(Reason2)
+	end,
+	FuseLDFlags0 = case rebar_utils:sh("pkg-config --libs fuse",
+	                                   [{use_stdout, false}, return_on_error]) of
+		{ok, Result3}    -> Result3;
+		{error, Reason3} -> throw(Reason3)
 	end,
 
-FuseLDFlags = [ C || C <- FuseLDFlags0, (C =/= 10) and (C =/= 13) ],
+	FuseCFlags = [ C || C <- FuseCFlags0, (C =/= 10) and (C =/= 13) ] ++
+		case os:type() of
+			{unix, darwin} -> " -DDARWIN_TWEAKS";
+			_ -> ""
+		end,
+
+	FuseLDFlags = [ C || C <- FuseLDFlags0, (C =/= 10) and (C =/= 13) ],
 
 
-Config = [
-	{port_specs, [
-		{"priv/fuserl_drv.so", [
-			"c_src/fuserl.c",
-			"c_src/fuserl_portability.c"
+	Config = [
+		{port_specs, [
+			{"priv/fuserl_drv.so", [
+				"c_src/fuserl.c",
+				"c_src/fuserl_portability.c"
+			]},
+			{"priv/fuserl", [
+				"c_src/fuserldrv.c",
+				"c_src/driver2pipe.c"
+			]}
 		]},
-		{"priv/fuserl", [
-			"c_src/fuserldrv.c",
-			"c_src/driver2pipe.c"
+		{port_env, [
+			{"CFLAGS", FuseCFlags ++ Defs},
+			{"LDFLAGS", FuseLDFlags}
 		]}
-	]},
-	{port_env, [
-		{"CFLAGS", FuseCFlags ++ Defs},
-		{"LDFLAGS", FuseLDFlags}
-	]}
-],
+	],
 
-% io:format("config: ~p~n", [Config]),
+	% io:format("config: ~p~n", [Config]),
 
-Config.
+	Config
+catch
+	throw:{_Code, Error} ->
+		io:format("Error in fuserl rebar config script: ~s", [Error]),
+		CONFIG
+end.
