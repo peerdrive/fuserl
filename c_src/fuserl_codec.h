@@ -140,6 +140,16 @@ decode_native_64_unsigned  (char*          buf)
     }                                                           \
   while (0)
 
+#ifdef DARWIN_TWEAKS
+#define ST_ATIM st_atimespec
+#define ST_MTIM st_mtimespec
+#define ST_CTIM st_ctimespec
+#else
+#define ST_ATIM st_atim
+#define ST_MTIM st_mtim
+#define ST_CTIM st_ctim
+#endif
+
 #define DECODE_STAT(x)                                          \
   do                                                            \
     {                                                           \
@@ -155,9 +165,12 @@ decode_native_64_unsigned  (char*          buf)
       DECODE_NATIVE_64_UNSIGNED ((x).st_size);                  \
       DECODE_NATIVE_64_UNSIGNED ((x).st_blksize);               \
       DECODE_NATIVE_64_UNSIGNED ((x).st_blocks);                \
-      DECODE_NATIVE_64_UNSIGNED ((x).st_atime);                 \
-      DECODE_NATIVE_64_UNSIGNED ((x).st_mtime);                 \
-      DECODE_NATIVE_64_UNSIGNED ((x).st_ctime);                 \
+      DECODE_NATIVE_64_UNSIGNED ((x).ST_ATIM.tv_sec);           \
+      DECODE_NATIVE_64_UNSIGNED ((x).ST_ATIM.tv_nsec);          \
+      DECODE_NATIVE_64_UNSIGNED ((x).ST_MTIM.tv_sec);           \
+      DECODE_NATIVE_64_UNSIGNED ((x).ST_MTIM.tv_nsec);          \
+      DECODE_NATIVE_64_UNSIGNED ((x).ST_CTIM.tv_sec);           \
+      DECODE_NATIVE_64_UNSIGNED ((x).ST_CTIM.tv_nsec);          \
     }                                                           \
   while (0)
 
@@ -392,9 +405,12 @@ encode_native_64_unsigned (char*        buf,
       ENCODE_NATIVE_64_UNSIGNED ((x).st_size);                  \
       ENCODE_NATIVE_64_UNSIGNED ((x).st_blksize);               \
       ENCODE_NATIVE_64_UNSIGNED ((x).st_blocks);                \
-      ENCODE_NATIVE_64_UNSIGNED ((x).st_atime);                 \
-      ENCODE_NATIVE_64_UNSIGNED ((x).st_mtime);                 \
-      ENCODE_NATIVE_64_UNSIGNED ((x).st_ctime);                 \
+      ENCODE_NATIVE_64_UNSIGNED ((x).ST_ATIM.tv_sec);           \
+      ENCODE_NATIVE_64_UNSIGNED ((x).ST_ATIM.tv_nsec);          \
+      ENCODE_NATIVE_64_UNSIGNED ((x).ST_MTIM.tv_sec);           \
+      ENCODE_NATIVE_64_UNSIGNED ((x).ST_MTIM.tv_nsec);          \
+      ENCODE_NATIVE_64_UNSIGNED ((x).ST_CTIM.tv_sec);           \
+      ENCODE_NATIVE_64_UNSIGNED ((x).ST_CTIM.tv_nsec);          \
     }                                                           \
   while (0)
 
