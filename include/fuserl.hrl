@@ -104,8 +104,11 @@
                  st_blksize = 0,        % blocksize for filesystem I/O 
                  st_blocks = 0,         % number of blocks allocated 
                  st_atime = 0,          % time of last access 
+                 st_atimensec = 0,      % time of last access (nanosecond part)
                  st_mtime = 0,          % time of last modification 
-                 st_ctime = 0           % time of last status change 
+                 st_mtimensec = 0,      % time of last modification  (nanosecond part)
+                 st_ctime = 0,          % time of last status change
+                 st_ctimensec = 0       % time of last status change (nanosecond part)
                }).
 
 % Got this from statvfs(2).
