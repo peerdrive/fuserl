@@ -80,8 +80,11 @@ decode_stat (<<StDevMajor:64/native-unsigned,
                StBlkSize:64/native-unsigned,
                StBlocks:64/native-unsigned,
                StATime:64/native-unsigned,
+               StATimeNSec:64/native-unsigned,
                StMTime:64/native-unsigned,
+               StMTimeNSec:64/native-unsigned,
                StCTime:64/native-unsigned,
+               StCTimeNSec:64/native-unsigned,
                Rest/binary>>) ->
   { #stat{ st_dev = { StDevMajor, StDevMinor },
            st_ino = StIno,
@@ -94,8 +97,11 @@ decode_stat (<<StDevMajor:64/native-unsigned,
            st_blksize = StBlkSize,
            st_blocks = StBlocks,
            st_atime = StATime,
+           st_atimensec = StATimeNSec,
            st_mtime = StMTime,
-           st_ctime = StCTime }, 
+           st_mtimensec = StMTimeNSec,
+           st_ctime = StCTime,
+           st_ctimensec = StCTimeNSec },
     Rest }.
 
 encode_binary (Size, IoList) ->
@@ -170,8 +176,11 @@ encode_stat (Stat = #stat{}) ->
     encode_native_64_unsigned (Stat#stat.st_blksize),
     encode_native_64_unsigned (Stat#stat.st_blocks),
     encode_native_64_unsigned (Stat#stat.st_atime),
+    encode_native_64_unsigned (Stat#stat.st_atimensec),
     encode_native_64_unsigned (Stat#stat.st_mtime),
-    encode_native_64_unsigned (Stat#stat.st_ctime) ].
+    encode_native_64_unsigned (Stat#stat.st_mtimensec),
+    encode_native_64_unsigned (Stat#stat.st_ctime),
+    encode_native_64_unsigned (Stat#stat.st_ctimensec) ].
 
 encode_statvfs (StatVFS = #statvfs{}) ->
   [ encode_native_64_unsigned (StatVFS#statvfs.f_bsize),
